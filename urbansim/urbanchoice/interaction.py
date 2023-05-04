@@ -25,10 +25,9 @@ def enable_gpu():
 # and simulation.
 def mnl_interaction_dataset(choosers, alternatives, SAMPLE_SIZE,
                             chosenalts=None):
-    logger.debug((
-        'start: compute MNL interaction dataset with {} choosers, '
-        '{} alternatives, and sample_size={}'
-        ).format(len(choosers), len(alternatives), SAMPLE_SIZE))
+    logger.debug(
+        f'start: compute MNL interaction dataset with {len(choosers)} choosers, {len(alternatives)} alternatives, and sample_size={SAMPLE_SIZE}'
+    )
     # filter choosers and their current choices if they point to
     # something that isn't in the alternatives table
     if chosenalts is not None:
@@ -38,10 +37,9 @@ def mnl_interaction_dataset(choosers, alternatives, SAMPLE_SIZE,
         except Exception:
             removing = None
         if removing:
-            logger.info((
-                "Removing {} choice situations because chosen "
-                "alt doesn't exist"
-            ).format(removing))
+            logger.info(
+                f"Removing {removing} choice situations because chosen alt doesn't exist"
+            )
             choosers = choosers[isin]
             chosenalts = chosenalts[isin]
 

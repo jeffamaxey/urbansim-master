@@ -62,7 +62,7 @@ def find_movers(choosers, rates, rate_column):
 
     movers = relocation_rates.index[
         relocation_rates > np.random.random(len(choosers))]
-    logger.debug('picked {} movers for relocation'.format(len(movers)))
+    logger.debug(f'picked {len(movers)} movers for relocation')
     logger.debug('finish: find movers for relocation')
     return movers
 

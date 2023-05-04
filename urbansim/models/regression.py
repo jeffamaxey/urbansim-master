@@ -294,7 +294,7 @@ class RegressionModel(object):
                 cfg['fit_rsquared'], cfg['fit_rsquared_adj'])
             model.fit_parameters = fit_parameters
 
-        logger.debug('loaded regression model {} from YAML'.format(model.name))
+        logger.debug(f'loaded regression model {model.name} from YAML')
         return model
 
     @property
@@ -327,7 +327,7 @@ class RegressionModel(object):
             class instance for use during prediction.
 
         """
-        with log_start_finish('fitting model {}'.format(self.name), logger):
+        with log_start_finish(f'fitting model {self.name}', logger):
             fit = fit_model(data, self.fit_filters, self.str_model_expression)
 
         self.model_fit = fit
@@ -405,7 +405,7 @@ class RegressionModel(object):
 
         """
         self.assert_fitted()
-        with log_start_finish('predicting model {}'.format(self.name), logger):
+        with log_start_finish(f'predicting model {self.name}', logger):
             return predict(
                 data, self.predict_filters, self.model_fit, self.ytransform)
 
@@ -453,8 +453,7 @@ class RegressionModel(object):
             YAML string if `str_or_buffer` is not given.
 
         """
-        logger.debug(
-            'serializing regression model {} to YAML'.format(self.name))
+        logger.debug(f'serializing regression model {self.name} to YAML')
         return yamlio.convert_to_yaml(self.to_dict(), str_or_buffer)
 
     def columns_used(self):
@@ -486,13 +485,13 @@ class RegressionModel(object):
         -------
         RegressionModel which was used to fit
         """
-        logger.debug('start: fit from configuration {}'.format(cfgname))
+        logger.debug(f'start: fit from configuration {cfgname}')
         hm = cls.from_yaml(str_or_buffer=cfgname)
         ret = hm.fit(df, debug=debug)
         print(ret.summary())
         outcfgname = outcfgname or cfgname
         hm.to_yaml(str_or_buffer=outcfgname)
-        logger.debug('finish: fit into configuration {}'.format(outcfgname))
+        logger.debug(f'finish: fit into configuration {outcfgname}')
         return hm
 
     @classmethod
@@ -513,13 +512,13 @@ class RegressionModel(object):
             models.
         hm : RegressionModel which was used to predict
         """
-        logger.debug('start: predict from configuration {}'.format(cfgname))
+        logger.debug(f'start: predict from configuration {cfgname}')
         hm = cls.from_yaml(str_or_buffer=cfgname)
 
         price_or_rent = hm.predict(df)
         print(price_or_rent.describe())
 
-        logger.debug('start: predict from configuration {}'.format(cfgname))
+        logger.debug(f'start: predict from configuration {cfgname}')
         return price_or_rent, hm
 
 
@@ -554,8 +553,7 @@ class RegressionModelGroup(object):
             the groupby segments.
 
         """
-        logger.debug(
-            'adding model {} to group {}'.format(model.name, self.name))
+        logger.debug(f'adding model {model.name} to group {self.name}')
         self.models[model.name] = model
 
     def add_model_from_params(self, name, fit_filters, predict_filters,
@@ -583,8 +581,7 @@ class RegressionModelGroup(object):
             By default no transformation is applied.
 
         """
-        logger.debug(
-            'adding model {} to group {}'.format(name, self.name))
+        logger.debug(f'adding model {name} to group {self.name}')
         model = RegressionModel(
             fit_filters, predict_filters, model_expression, ytransform, name)
         self.models[name] = model
@@ -627,8 +624,7 @@ class RegressionModelGroup(object):
             Keys are the segment names.
 
         """
-        with log_start_finish(
-                'fitting models in group {}'.format(self.name), logger):
+        with log_start_finish(f'fitting models in group {self.name}', logger):
             return {name: self.models[name].fit(df, debug=debug)
                     for name, df in self._iter_groups(data)}
 
@@ -659,8 +655,7 @@ class RegressionModelGroup(object):
             models.
 
         """
-        with log_start_finish(
-                'predicting models in group {}'.format(self.name), logger):
+        with log_start_finish(f'predicting models in group {self.name}', logger):
             results = [self.models[name].predict(df)
                        for name, df in self._iter_groups(data)]
         return pd.concat(results)
@@ -763,8 +758,7 @@ class SegmentedRegressionModel(object):
             reg = RegressionModel.from_yaml(yamlio.convert_to_yaml(m, None))
             seg._group.add_model(reg)
 
-        logger.debug(
-            'loaded segmented regression model {} from yaml'.format(seg.name))
+        logger.debug(f'loaded segmented regression model {seg.name} from yaml')
         return seg
 
     def add_segment(self, name, model_expression=None, ytransform='default'):
@@ -803,7 +797,7 @@ class SegmentedRegressionModel(object):
         self._group.add_model_from_params(
             name, None, None, model_expression, ytransform)
 
-        logger.debug('added segment {} to model {}'.format(name, self.name))
+        logger.debug(f'added segment {name} to model {self.name}')
 
     def fit(self, data, debug=False):
         """
@@ -838,12 +832,10 @@ class SegmentedRegressionModel(object):
 
         for x in unique:
             if x not in self._group.models and \
-                    value_counts[x] > self.min_segment_size:
+                        value_counts[x] > self.min_segment_size:
                 self.add_segment(x)
 
-        with log_start_finish(
-                'fitting models in segmented model {}'.format(self.name),
-                logger):
+        with log_start_finish(f'fitting models in segmented model {self.name}', logger):
             return self._group.fit(data, debug=debug)
 
     @property
@@ -871,9 +863,7 @@ class SegmentedRegressionModel(object):
             after applying filters.
 
         """
-        with log_start_finish(
-                'predicting models in segmented model {}'.format(self.name),
-                logger):
+        with log_start_finish(f'predicting models in segmented model {self.name}', logger):
             data = util.apply_filter_query(data, self.predict_filters)
             return self._group.predict(data)
 
@@ -948,9 +938,7 @@ class SegmentedRegressionModel(object):
             YAML string if `str_or_buffer` is not given.
 
         """
-        logger.debug(
-            'serializing segmented regression model {} to yaml'.format(
-                self.name))
+        logger.debug(f'serializing segmented regression model {self.name} to yaml')
         return yamlio.convert_to_yaml(self.to_dict(), str_or_buffer)
 
     def columns_used(self):
@@ -986,7 +974,7 @@ class SegmentedRegressionModel(object):
         -------
         hm : SegmentedRegressionModel which was used to fit
         """
-        logger.debug('start: fit from configuration {}'.format(cfgname))
+        logger.debug(f'start: fit from configuration {cfgname}')
         hm = cls.from_yaml(str_or_buffer=cfgname)
         if min_segment_size:
             hm.min_segment_size = min_segment_size
@@ -996,7 +984,7 @@ class SegmentedRegressionModel(object):
             print(v.summary())
         outcfgname = outcfgname or cfgname
         hm.to_yaml(str_or_buffer=outcfgname)
-        logger.debug('finish: fit into configuration {}'.format(outcfgname))
+        logger.debug(f'finish: fit into configuration {outcfgname}')
         return hm
 
     @classmethod
@@ -1019,13 +1007,13 @@ class SegmentedRegressionModel(object):
             models.
         hm : SegmentedRegressionModel which was used to predict
         """
-        logger.debug('start: predict from configuration {}'.format(cfgname))
+        logger.debug(f'start: predict from configuration {cfgname}')
         hm = cls.from_yaml(str_or_buffer=cfgname)
         if min_segment_size:
             hm.min_segment_size = min_segment_size
 
         price_or_rent = hm.predict(df)
         print(price_or_rent.describe())
-        logger.debug('finish: predict from configuration {}'.format(cfgname))
+        logger.debug(f'finish: predict from configuration {cfgname}')
 
         return price_or_rent, hm

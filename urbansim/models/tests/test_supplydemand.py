@@ -17,11 +17,14 @@ def choosers():
 @pytest.fixture
 def alternatives():
     return pd.DataFrame(
-        {'var2': range(10, 20),
-         'var3': range(20, 30),
-         'price_col': [1] * 10,
-         'zone_id': ['w', 'x', 'y', 'z', 'z', 'x', 'y', 'w', 'y', 'y']},
-        index=pd.Index([x for x in 'abcdefghij'], name='thing_id'))
+        {
+            'var2': range(10, 20),
+            'var3': range(20, 30),
+            'price_col': [1] * 10,
+            'zone_id': ['w', 'x', 'y', 'z', 'z', 'x', 'y', 'w', 'y', 'y'],
+        },
+        index=pd.Index(list('abcdefghij'), name='thing_id'),
+    )
 
 
 @pytest.fixture(scope='module')

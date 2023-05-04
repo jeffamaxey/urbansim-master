@@ -16,9 +16,9 @@ def choosers():
 @pytest.fixture
 def alternatives():
     return pd.DataFrame(
-        {'var2': range(10, 20),
-         'var3': range(20, 30)},
-        index=pd.Index([x for x in 'abcdefghij'], name='thing_id'))
+        {'var2': range(10, 20), 'var3': range(20, 30)},
+        index=pd.Index(list('abcdefghij'), name='thing_id'),
+    )
 
 
 def test_interaction_dataset_sim(choosers, alternatives):
@@ -35,8 +35,13 @@ def test_interaction_dataset_sim(choosers, alternatives):
 
     assert len(merged) == len(choosers) * len(alternatives)
     npt.assert_array_equal(merged.index.values, sample)
-    assert set(list(merged.columns)) == set([
-        'var2', 'var3', 'join_index', 'thing_id', 'var1'])
+    assert set(list(merged.columns)) == {
+        'var2',
+        'var3',
+        'join_index',
+        'thing_id',
+        'var1',
+    }
     npt.assert_array_equal(
         merged['var1'].values,
         choosers['var1'].values.repeat(len(alternatives)))

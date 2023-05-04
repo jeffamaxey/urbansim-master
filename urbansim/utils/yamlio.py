@@ -49,10 +49,9 @@ def series_to_yaml_safe(series, ordered=False):
     values = series.values.tolist()
 
     if ordered:
-        return OrderedDict(
-            tuple((k, v)) for k, v in zip(index, values))
+        return OrderedDict((k, v) for k, v in zip(index, values))
     else:
-        return {i: v for i, v in zip(index, values)}
+        return dict(zip(index, values))
 
 
 def frame_to_yaml_safe(frame, ordered=False):
@@ -118,13 +117,11 @@ def ordered_yaml(cfg, order=None):
                  'model_expression', 'ytransform', 'min_segment_size',
                  'default_config', 'models', 'coefficients', 'fitted']
 
-    s = []
-    for key in order:
-        if key not in cfg:
-            continue
-        s.append(
-            yaml.dump({key: cfg[key]}, default_flow_style=False, indent=4))
-
+    s = [
+        yaml.dump({key: cfg[key]}, default_flow_style=False, indent=4)
+        for key in order
+        if key in cfg
+    ]
     for key in cfg:
         if key in order:
             continue
@@ -178,10 +175,7 @@ def convert_to_yaml(cfg, str_or_buffer):
         is written out to a separate destination.
 
     """
-    order = None
-    if isinstance(cfg, OrderedDict):
-        order = []
-
+    order = [] if isinstance(cfg, OrderedDict) else None
     s = ordered_yaml(cfg, order)
 
     if not str_or_buffer:
@@ -217,11 +211,7 @@ def yaml_to_dict(yaml_str=None, str_or_buffer=None, ordered=False):
         raise ValueError('One of yaml_str or str_or_buffer is required.')
 
     # determine which load method to use
-    if ordered:
-        loader = __ordered_load
-    else:
-        loader = yaml.safe_load
-
+    loader = __ordered_load if ordered else yaml.safe_load
     if yaml_str:
         d = loader(yaml_str)
     elif isinstance(str_or_buffer, str):

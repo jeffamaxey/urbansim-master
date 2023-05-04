@@ -41,14 +41,10 @@ def apply_filter_query(df, filters=None):
 
     """
     with log_start_finish('apply filter query: {!r}'.format(filters), logger):
-        if filters:
-            if isinstance(filters, str):
-                query = filters
-            else:
-                query = ' and '.join(filters)
-            return df.query(query)
-        else:
+        if not filters:
             return df
+        query = filters if isinstance(filters, str) else ' and '.join(filters)
+        return df.query(query)
 
 
 def _filterize(name, value):
@@ -83,9 +79,7 @@ def _filterize(name, value):
         comp = '=='
 
     result = '{} {} {!r}'.format(name, comp, value)
-    logger.debug(
-        'converted name={} and value={} to filter {}'.format(
-            name, value, result))
+    logger.debug(f'converted name={name} and value={value} to filter {result}')
     return result
 
 
@@ -216,11 +210,7 @@ def str_model_expression(expr, add_constant=True):
         model_expression = expr
 
     if not has_constant_expr(model_expression):
-        if add_constant:
-            model_expression += ' + 1'
-        else:
-            model_expression += ' - 1'
-
+        model_expression += ' + 1' if add_constant else ' - 1'
     logger.debug(
         'converted expression: {!r} to model: {!r}'.format(
             expr, model_expression))
@@ -276,13 +266,15 @@ def columns_in_filters(filters):
     if not isinstance(filters, str):
         filters = ' '.join(filters)
 
-    columns = []
     reserved = {'and', 'or', 'in', 'not'}
 
-    for toknum, tokval, _, _, _ in generate_tokens(StringIO(filters).readline):
-        if toknum == NAME and tokval not in reserved:
-            columns.append(tokval)
-
+    columns = [
+        tokval
+        for toknum, tokval, _, _, _ in generate_tokens(
+            StringIO(filters).readline
+        )
+        if toknum == NAME and tokval not in reserved
+    ]
     return list(tz.unique(columns))
 
 
@@ -297,9 +289,7 @@ def _tokens_from_patsy(node):
 
     """
     for n in node.args:
-        for t in _tokens_from_patsy(n):
-            yield t
-
+        yield from _tokens_from_patsy(n)
     if node.token:
         yield node.token
 
@@ -339,9 +329,11 @@ def columns_in_formula(formula):
             fin = tok.rfind(')')
             columns.extend(columns_in_formula(tok[start:fin]))
         else:
-            for toknum, tokval, _, _, _ in generate_tokens(
-                    StringIO(tok).readline):
-                if toknum == NAME:
-                    columns.append(tokval)
-
+            columns.extend(
+                tokval
+                for toknum, tokval, _, _, _ in generate_tokens(
+                    StringIO(tok).readline
+                )
+                if toknum == NAME
+            )
     return list(tz.unique(columns))

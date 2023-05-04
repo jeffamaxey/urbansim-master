@@ -24,11 +24,7 @@ def assert_frames_equal(actual, expected, use_close=False):
         numpy.testing.assert_equal.
 
     """
-    if use_close:
-        comp = npt.assert_allclose
-    else:
-        comp = npt.assert_equal
-
+    comp = npt.assert_allclose if use_close else npt.assert_equal
     assert (isinstance(actual, pd.DataFrame) and
             isinstance(expected, pd.DataFrame)), \
         'Inputs must both be pandas DataFrames.'
