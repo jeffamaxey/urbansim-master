@@ -25,7 +25,7 @@ def from_yaml(net, cfgname):
     for variable in cfg['variable_definitions']:
 
         name = variable["name"]
-        print("Computing %s" % name)
+        print(f"Computing {name}")
 
         decay = variable.get("decay", "linear")
         agg = variable.get("aggregation", "sum")
@@ -43,11 +43,10 @@ def from_yaml(net, cfgname):
 
         if "filters" in variable:
             df = util.apply_filter_query(df, variable["filters"])
-            logger.info("    Filters = %s" % variable["filters"])
+            logger.info(f'    Filters = {variable["filters"]}')
 
-        logger.info("    dataframe = %s, varname=%s" % (dfname, vname))
-        logger.info("    radius = %s, aggregation = %s, decay = %s" % (
-            radius, agg, decay))
+        logger.info(f"    dataframe = {dfname}, varname={vname}")
+        logger.info(f"    radius = {radius}, aggregation = {agg}, decay = {decay}")
 
         # set the variable
         net.set(df[node_col], variable=df[vname] if vname else None)

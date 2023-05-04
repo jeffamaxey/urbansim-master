@@ -29,7 +29,7 @@ def get_schema():
 def map_query(table, filter, groupby, field, agg):
     global DFRAMES
 
-    filter = ".query('%s')" % filter if filter != "empty" else ""
+    filter = f".query('{filter}')" if filter != "empty" else ""
 
     df = DFRAMES[table]
 
@@ -38,8 +38,7 @@ def map_query(table, filter, groupby, field, agg):
         df["eval"] = df.eval(field)
         field = "eval"
 
-    cmd = "df%s.groupby('%s')['%s'].%s" % \
-          (filter, groupby, field, agg)
+    cmd = f"df{filter}.groupby('{groupby}')['{field}'].{agg}"
     print(cmd)
     results = eval(cmd)
     results[results == np.inf] = np.nan
@@ -117,7 +116,7 @@ def start(views,
     global DFRAMES, CONFIG
     DFRAMES = {str(k): views[k] for k in views}
 
-    root = "http://{}:{}/".format(host, port)
+    root = f"http://{host}:{port}/"
 
     config = {
         'center': str(center),

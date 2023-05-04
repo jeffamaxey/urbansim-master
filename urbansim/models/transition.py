@@ -50,7 +50,7 @@ def add_rows(data, nrows, starting_index=None, accounting_column=None):
         will have multiple entries.
 
     """
-    logger.debug('start: adding {} rows in transition model'.format(nrows))
+    logger.debug(f'start: adding {nrows} rows in transition model')
     if nrows == 0:
         return data, _empty_index(), _empty_index()
 
@@ -63,8 +63,7 @@ def add_rows(data, nrows, starting_index=None, accounting_column=None):
         starting_index, starting_index + len(new_rows.index), dtype=np.int))
     new_rows.index = added_index
 
-    logger.debug(
-        'finish: added {} rows in transition model'.format(len(new_rows)))
+    logger.debug(f'finish: added {len(new_rows)} rows in transition model')
     return pd.concat([data, new_rows]), added_index, copied_index
 
 
@@ -89,7 +88,7 @@ def remove_rows(data, nrows, accounting_column=None):
         Indexes of the rows removed from the table.
 
     """
-    logger.debug('start: removing {} rows in transition model'.format(nrows))
+    logger.debug(f'start: removing {nrows} rows in transition model')
     nrows = abs(nrows)  # in case a negative number came in
     unit_check = data[accounting_column].sum() if accounting_column else len(data)
     if nrows == 0:
@@ -100,7 +99,7 @@ def remove_rows(data, nrows, accounting_column=None):
     remove_rows = sample_rows(nrows, data, accounting_column=accounting_column, replace=False)
     remove_index = remove_rows.index
 
-    logger.debug('finish: removed {} rows in transition model'.format(nrows))
+    logger.debug(f'finish: removed {nrows} rows in transition model')
     return data.loc[data.index.difference(remove_index)], remove_index
 
 
@@ -194,10 +193,7 @@ class GrowthRateTransition(object):
             nrows = int(round(len(data) * self.growth_rate))
         else:
             nrows = int(round(data[self.accounting_column].sum() * self.growth_rate))
-        with log_start_finish(
-                'adding {} rows via growth rate ({}) transition'.format(
-                    nrows, self.growth_rate),
-                logger):
+        with log_start_finish(f'adding {nrows} rows via growth rate ({self.growth_rate}) transition', logger):
             return add_or_remove_rows(data, nrows, accounting_column=self.accounting_column)
 
     def __call__(self, data, year):
@@ -286,11 +282,11 @@ class TabularGrowthRateTransition(object):
         """
         logger.debug('start: tabular transition')
         if year not in self._config_table.index:
-            raise ValueError('No targets for given year: {}'.format(year))
+            raise ValueError(f'No targets for given year: {year}')
 
         # want this to be a DataFrame
         year_config = self._config_table.loc[[year]]
-        logger.debug('transitioning {} segments'.format(len(year_config)))
+        logger.debug(f'transitioning {len(year_config)} segments')
 
         segments = []
         added_indexes = []
@@ -317,7 +313,7 @@ class TabularGrowthRateTransition(object):
                     row[self._config_column])
 
             updated, added, copied, removed = \
-                add_or_remove_rows(subset, nrows, starting_index, self.accounting_column)
+                    add_or_remove_rows(subset, nrows, starting_index, self.accounting_column)
             if nrows > 0:
                 # only update the starting index if rows were added
                 starting_index = starting_index + nrows
@@ -517,9 +513,9 @@ class TransitionModel(object):
             updated, added, copied, removed = self.transitioner(data, year)
 
         for table_name, (table, col) in linked_tables.items():
-            logger.debug('updating linked table {}'.format(table_name))
+            logger.debug(f'updating linked table {table_name}')
             updated_links[table_name] = \
-                _update_linked_table(table, col, added, copied, removed)
+                    _update_linked_table(table, col, added, copied, removed)
 
         logger.debug('finish: transition')
         return updated, added, updated_links

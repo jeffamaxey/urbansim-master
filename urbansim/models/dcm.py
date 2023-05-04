@@ -53,8 +53,8 @@ def unit_choice(chooser_ids, alternative_ids, probabilities):
     probabilities = np.asanyarray(probabilities)
 
     logger.debug(
-        'start: unit choice with {} choosers and {} alternatives'.format(
-            len(chooser_ids), len(alternative_ids)))
+        f'start: unit choice with {len(chooser_ids)} choosers and {len(alternative_ids)} alternatives'
+    )
 
     choices = pd.Series(index=chooser_ids)
 
@@ -68,7 +68,7 @@ def unit_choice(chooser_ids, alternative_ids, probabilities):
     # need to see if there are as many available alternatives as choosers
     n_available = np.count_nonzero(probabilities)
     n_choosers = len(chooser_ids)
-    n_to_choose = n_choosers if n_choosers < n_available else n_available
+    n_to_choose = min(n_choosers, n_available)
 
     chosen = np.random.choice(
         alternative_ids, size=n_to_choose, replace=False, p=probabilities)
@@ -316,7 +316,7 @@ class MNLDiscreteChoiceModel(DiscreteChoiceModel):
         if cfg.get('fit_parameters', None):
             model.fit_parameters = pd.DataFrame(cfg['fit_parameters'])
 
-        logger.debug('loaded LCM model {} from YAML'.format(model.name))
+        logger.debug(f'loaded LCM model {model.name} from YAML')
         return model
 
     @property
@@ -393,7 +393,7 @@ class MNLDiscreteChoiceModel(DiscreteChoiceModel):
             model fit. Will have keys 'null', 'convergence', and 'ratio'.
 
         """
-        logger.debug('start: fit LCM model {}'.format(self.name))
+        logger.debug(f'start: fit LCM model {self.name}')
 
         if not isinstance(current_choice, pd.Series):
             current_choice = choosers[current_choice]
@@ -423,7 +423,7 @@ class MNLDiscreteChoiceModel(DiscreteChoiceModel):
             model_design.values, chosen, self.sample_size)
         self.fit_parameters.index = model_design.columns
 
-        logger.debug('finish: fit LCM model {}'.format(self.name))
+        logger.debug(f'finish: fit LCM model {self.name}')
         return self.log_likelihoods
 
     @property
@@ -494,8 +494,7 @@ class MNLDiscreteChoiceModel(DiscreteChoiceModel):
             IDs in the inner index and chooser IDs in the out index.
 
         """
-        logger.debug('start: calculate probabilities for LCM model {}'.format(
-            self.name))
+        logger.debug(f'start: calculate probabilities for LCM model {self.name}')
         self.assert_fitted()
 
         if filter_tables:
@@ -515,8 +514,8 @@ class MNLDiscreteChoiceModel(DiscreteChoiceModel):
                 choosers, alternatives, sample_size)
         else:
             raise ValueError(
-                'Unrecognized probability_mode option: {}'.format(
-                    self.probability_mode))
+                f'Unrecognized probability_mode option: {self.probability_mode}'
+            )
 
         merged = util.apply_filter_query(
             merged, self.interaction_predict_filters)
@@ -555,8 +554,7 @@ class MNLDiscreteChoiceModel(DiscreteChoiceModel):
             names=('chooser_id', 'alternative_id'))
         probabilities = pd.Series(probabilities.flatten(), index=mi)
 
-        logger.debug('finish: calculate probabilities for LCM model {}'.format(
-            self.name))
+        logger.debug(f'finish: calculate probabilities for LCM model {self.name}')
         return probabilities
 
     def summed_probabilities(self, choosers, alternatives):
@@ -701,7 +699,7 @@ class MNLDiscreteChoiceModel(DiscreteChoiceModel):
             YAML is string if `str_or_buffer` is not given.
 
         """
-        logger.debug('serializing LCM model {} to YAML'.format(self.name))
+        logger.debug(f'serializing LCM model {self.name} to YAML')
         if (not isinstance(self.probability_mode, str) or
                 not isinstance(self.choice_mode, str)):
             raise TypeError(
@@ -774,13 +772,13 @@ class MNLDiscreteChoiceModel(DiscreteChoiceModel):
         -------
         lcm : MNLDiscreteChoiceModel which was used to fit
         """
-        logger.debug('start: fit from configuration {}'.format(cfgname))
+        logger.debug(f'start: fit from configuration {cfgname}')
         lcm = cls.from_yaml(str_or_buffer=cfgname)
         lcm.fit(choosers, alternatives, choosers[chosen_fname])
         lcm.report_fit()
         outcfgname = outcfgname or cfgname
         lcm.to_yaml(str_or_buffer=outcfgname)
-        logger.debug('finish: fit into configuration {}'.format(outcfgname))
+        logger.debug(f'finish: fit into configuration {outcfgname}')
         return lcm
 
     @classmethod
@@ -817,7 +815,7 @@ class MNLDiscreteChoiceModel(DiscreteChoiceModel):
             for all the choosers.
         lcm : MNLDiscreteChoiceModel which was used to predict
         """
-        logger.debug('start: predict from configuration {}'.format(cfgname))
+        logger.debug(f'start: predict from configuration {cfgname}')
         if cfgname:
             lcm = cls.from_yaml(str_or_buffer=cfgname)
         elif cfg:
@@ -843,7 +841,7 @@ class MNLDiscreteChoiceModel(DiscreteChoiceModel):
 
         new_units = lcm.predict(choosers, alternatives, debug=debug)
         print("Assigned %d choosers to new units" % len(new_units.dropna()))
-        logger.debug('finish: predict from configuration {}'.format(cfgname))
+        logger.debug(f'finish: predict from configuration {cfgname}')
         return new_units, lcm
 
 
@@ -886,8 +884,7 @@ class MNLDiscreteChoiceModelGroup(DiscreteChoiceModel):
             in the choosers table.
 
         """
-        logger.debug(
-            'adding model {} to LCM group {}'.format(model.name, self.name))
+        logger.debug(f'adding model {model.name} to LCM group {self.name}')
         self.models[model.name] = model
 
     def add_model_from_params(
@@ -950,7 +947,7 @@ class MNLDiscreteChoiceModelGroup(DiscreteChoiceModel):
             the alternatives index is used.
 
         """
-        logger.debug('adding model {} to LCM group {}'.format(name, self.name))
+        logger.debug(f'adding model {name} to LCM group {self.name}')
         self.models[name] = MNLDiscreteChoiceModel(
             model_expression, sample_size,
             probability_mode, choice_mode,
@@ -979,8 +976,7 @@ class MNLDiscreteChoiceModelGroup(DiscreteChoiceModel):
         for name, group in groups:
             if name not in self.models:
                 continue
-            logger.debug(
-                'returning group {} in LCM group {}'.format(name, self.name))
+            logger.debug(f'returning group {name} in LCM group {self.name}')
             yield name, group
 
     def apply_fit_filters(self, choosers, alternatives):
@@ -1071,8 +1067,7 @@ class MNLDiscreteChoiceModelGroup(DiscreteChoiceModel):
             log-liklihood values as returned by MNLDiscreteChoiceModel.fit.
 
         """
-        with log_start_finish(
-                'fit models in LCM group {}'.format(self.name), logger):
+        with log_start_finish(f'fit models in LCM group {self.name}', logger):
             return {
                 name: self.models[name].fit(df, alternatives, current_choice)
                 for name, df in self._iter_groups(choosers)}
@@ -1104,16 +1099,12 @@ class MNLDiscreteChoiceModelGroup(DiscreteChoiceModel):
         probabilties : dict of pandas.Series
 
         """
-        logger.debug(
-            'start: calculate probabilities in LCM group {}'.format(self.name))
-        probs = {}
-
-        for name, df in self._iter_groups(choosers):
-            probs[name] = self.models[name].probabilities(df, alternatives)
-
-        logger.debug(
-            'finish: calculate probabilities in LCM group {}'.format(
-                self.name))
+        logger.debug(f'start: calculate probabilities in LCM group {self.name}')
+        probs = {
+            name: self.models[name].probabilities(df, alternatives)
+            for name, df in self._iter_groups(choosers)
+        }
+        logger.debug(f'finish: calculate probabilities in LCM group {self.name}')
         return probs
 
     def summed_probabilities(self, choosers, alternatives):
@@ -1138,21 +1129,17 @@ class MNLDiscreteChoiceModelGroup(DiscreteChoiceModel):
         if len(alternatives) == 0 or len(choosers) == 0:
             return pd.Series()
 
-        logger.debug(
-            'start: calculate summed probabilities in LCM group {}'.format(
-                self.name))
-        probs = []
-
-        for name, df in self._iter_groups(choosers):
-            probs.append(
-                self.models[name].summed_probabilities(df, alternatives))
-
+        logger.debug(f'start: calculate summed probabilities in LCM group {self.name}')
+        probs = [
+            self.models[name].summed_probabilities(df, alternatives)
+            for name, df in self._iter_groups(choosers)
+        ]
         add = tz.curry(pd.Series.add, fill_value=0)
         probs = tz.reduce(add, probs)
 
         logger.debug(
-            'finish: calculate summed probabilities in LCM group {}'.format(
-                self.name))
+            f'finish: calculate summed probabilities in LCM group {self.name}'
+        )
         return probs
 
     def predict(self, choosers, alternatives, debug=False):
@@ -1180,7 +1167,7 @@ class MNLDiscreteChoiceModelGroup(DiscreteChoiceModel):
             for all the choosers.
 
         """
-        logger.debug('start: predict models in LCM group {}'.format(self.name))
+        logger.debug(f'start: predict models in LCM group {self.name}')
         results = []
 
         for name, df in self._iter_groups(choosers):
@@ -1190,8 +1177,7 @@ class MNLDiscreteChoiceModelGroup(DiscreteChoiceModel):
                     ~alternatives.index.isin(choices)]
             results.append(choices)
 
-        logger.debug(
-            'finish: predict models in LCM group {}'.format(self.name))
+        logger.debug(f'finish: predict models in LCM group {self.name}')
         return pd.concat(results) if results else pd.Series()
 
     def choosers_columns_used(self):
@@ -1383,7 +1369,7 @@ class SegmentedMNLDiscreteChoiceModel(DiscreteChoiceModel):
             m['alts_fit_filters'] = None
             m['alts_predict_filters'] = None
             m['interaction_predict_filters'] = \
-                cfg['interaction_predict_filters']
+                    cfg['interaction_predict_filters']
             m['estimation_sample_size'] = cfg['estimation_sample_size']
             m['prediction_sample_size'] = cfg['prediction_sample_size']
             m['choice_column'] = cfg['choice_column']
@@ -1392,8 +1378,7 @@ class SegmentedMNLDiscreteChoiceModel(DiscreteChoiceModel):
                 yamlio.convert_to_yaml(m, None))
             seg._group.add_model(model)
 
-        logger.debug(
-            'loaded segmented LCM model {} from YAML'.format(seg.name))
+        logger.debug(f'loaded segmented LCM model {seg.name} from YAML')
         return seg
 
     def add_segment(self, name, model_expression=None):
@@ -1411,8 +1396,7 @@ class SegmentedMNLDiscreteChoiceModel(DiscreteChoiceModel):
             None.
 
         """
-        logger.debug('adding LCM model {} to segmented model {}'.format(
-            name, self.name))
+        logger.debug(f'adding LCM model {name} to segmented model {self.name}')
         if not model_expression:
             if not self.default_model_expr:
                 raise ValueError(
@@ -1503,7 +1487,7 @@ class SegmentedMNLDiscreteChoiceModel(DiscreteChoiceModel):
             log-liklihood values as returned by MNLDiscreteChoiceModel.fit.
 
         """
-        logger.debug('start: fit models in segmented LCM {}'.format(self.name))
+        logger.debug(f'start: fit models in segmented LCM {self.name}')
 
         choosers, alternatives = self.apply_fit_filters(choosers, alternatives)
         unique = choosers[self.segmentation_col].unique()
@@ -1521,8 +1505,7 @@ class SegmentedMNLDiscreteChoiceModel(DiscreteChoiceModel):
                 self.add_segment(x)
 
         results = self._group.fit(choosers, alternatives, current_choice)
-        logger.debug(
-            'finish: fit models in segmented LCM {}'.format(self.name))
+        logger.debug(f'finish: fit models in segmented LCM {self.name}')
         return results
 
     @property
@@ -1562,15 +1545,11 @@ class SegmentedMNLDiscreteChoiceModel(DiscreteChoiceModel):
         probabilties : dict of pandas.Series
 
         """
-        logger.debug(
-            'start: calculate probabilities in segmented LCM {}'.format(
-                self.name))
+        logger.debug(f'start: calculate probabilities in segmented LCM {self.name}')
         choosers, alternatives = self.apply_predict_filters(
             choosers, alternatives)
         result = self._group.probabilities(choosers, alternatives)
-        logger.debug(
-            'finish: calculate probabilities in segmented LCM {}'.format(
-                self.name))
+        logger.debug(f'finish: calculate probabilities in segmented LCM {self.name}')
         return result
 
     def summed_probabilities(self, choosers, alternatives):
@@ -1593,14 +1572,14 @@ class SegmentedMNLDiscreteChoiceModel(DiscreteChoiceModel):
 
         """
         logger.debug(
-            'start: calculate summed probabilities in segmented LCM {}'.format(
-                self.name))
+            f'start: calculate summed probabilities in segmented LCM {self.name}'
+        )
         choosers, alternatives = self.apply_predict_filters(
             choosers, alternatives)
         result = self._group.summed_probabilities(choosers, alternatives)
         logger.debug(
-            ('finish: calculate summed probabilities in segmented LCM {}'
-             ).format(self.name))
+            f'finish: calculate summed probabilities in segmented LCM {self.name}'
+        )
         return result
 
     def predict(self, choosers, alternatives, debug=False):
@@ -1628,14 +1607,12 @@ class SegmentedMNLDiscreteChoiceModel(DiscreteChoiceModel):
             for all the choosers.
 
         """
-        logger.debug(
-            'start: predict models in segmented LCM {}'.format(self.name))
+        logger.debug(f'start: predict models in segmented LCM {self.name}')
         choosers, alternatives = self._filter_choosers_alts(
             choosers, alternatives)
 
         results = self._group.predict(choosers, alternatives, debug=debug)
-        logger.debug(
-            'finish: predict models in segmented LCM {}'.format(self.name))
+        logger.debug(f'finish: predict models in segmented LCM {self.name}')
         return results
 
     def _process_model_dict(self, d):
@@ -1724,7 +1701,7 @@ class SegmentedMNLDiscreteChoiceModel(DiscreteChoiceModel):
             YAML is string if `str_or_buffer` is not given.
 
         """
-        logger.debug('serializing segmented LCM {} to YAML'.format(self.name))
+        logger.debug(f'serializing segmented LCM {self.name} to YAML')
         return yamlio.convert_to_yaml(self.to_dict(), str_or_buffer)
 
     def choosers_columns_used(self):
@@ -1792,7 +1769,7 @@ class SegmentedMNLDiscreteChoiceModel(DiscreteChoiceModel):
         -------
         lcm : SegmentedMNLDiscreteChoiceModel which was used to fit
         """
-        logger.debug('start: fit from configuration {}'.format(cfgname))
+        logger.debug(f'start: fit from configuration {cfgname}')
         lcm = cls.from_yaml(str_or_buffer=cfgname)
         lcm.fit(choosers, alternatives, choosers[chosen_fname])
         for k, v in lcm._group.models.items():
@@ -1800,7 +1777,7 @@ class SegmentedMNLDiscreteChoiceModel(DiscreteChoiceModel):
             v.report_fit()
         outcfgname = outcfgname or cfgname
         lcm.to_yaml(str_or_buffer=outcfgname)
-        logger.debug('finish: fit into configuration {}'.format(outcfgname))
+        logger.debug(f'finish: fit into configuration {outcfgname}')
         return lcm
 
     @classmethod
@@ -1835,7 +1812,7 @@ class SegmentedMNLDiscreteChoiceModel(DiscreteChoiceModel):
             for all the choosers.
         lcm : SegmentedMNLDiscreteChoiceModel which was used to predict
         """
-        logger.debug('start: predict from configuration {}'.format(cfgname))
+        logger.debug(f'start: predict from configuration {cfgname}')
         if cfgname:
             lcm = cls.from_yaml(str_or_buffer=cfgname)
         elif cfg:
@@ -1861,5 +1838,5 @@ class SegmentedMNLDiscreteChoiceModel(DiscreteChoiceModel):
 
         new_units = lcm.predict(choosers, alternatives, debug=debug)
         print("Assigned %d choosers to new units" % len(new_units.dropna()))
-        logger.debug('finish: predict from configuration {}'.format(cfgname))
+        logger.debug(f'finish: predict from configuration {cfgname}')
         return new_units, lcm

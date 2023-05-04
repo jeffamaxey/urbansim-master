@@ -76,8 +76,8 @@ def _calculate_adjustment(
     alts_muliplier.index = alt_segmenter.index
 
     logger.debug(
-        ('finish: calculate supply and demand price adjustment multiplier '
-         'with mean multiplier {}').format(multiplier.mean()))
+        f'finish: calculate supply and demand price adjustment multiplier with mean multiplier {multiplier.mean()}'
+    )
     return alts_muliplier, multiplier, finished
 
 

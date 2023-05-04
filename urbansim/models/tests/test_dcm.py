@@ -39,9 +39,9 @@ def grouped_choosers(choosers):
 @pytest.fixture
 def alternatives():
     return pd.DataFrame(
-        {'var2': range(10, 20),
-         'var3': range(20, 30)},
-        index=pd.Index([x for x in 'abcdefghij'], name='thing_id'))
+        {'var2': range(10, 20), 'var3': range(20, 30)},
+        index=pd.Index(list('abcdefghij'), name='thing_id'),
+    )
 
 
 @pytest.fixture
@@ -60,15 +60,21 @@ def basic_dcm():
     choice_column = None
     name = 'Test LCM'
 
-    model = dcm.MNLDiscreteChoiceModel(
-        model_exp, sample_size,
-        probability_mode, choice_mode,
-        choosers_fit_filters, choosers_predict_filters,
-        alts_fit_filters, alts_predict_filters,
-        interaction_predict_filters, estimation_sample_size,
-        prediction_sample_size, choice_column, name)
-
-    return model
+    return dcm.MNLDiscreteChoiceModel(
+        model_exp,
+        sample_size,
+        probability_mode,
+        choice_mode,
+        choosers_fit_filters,
+        choosers_predict_filters,
+        alts_fit_filters,
+        alts_predict_filters,
+        interaction_predict_filters,
+        estimation_sample_size,
+        prediction_sample_size,
+        choice_column,
+        name,
+    )
 
 
 @pytest.fixture

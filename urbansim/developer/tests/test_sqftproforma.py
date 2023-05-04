@@ -52,12 +52,10 @@ def test_sqftproforma_defaults(simple_dev_inputs):
 
     for form in pf.config.forms:
         out = pf.lookup(form, simple_dev_inputs)
-        if form == "industrial":
+        if form in ["industrial", "office"]:
             assert len(out) == 0
-        if form == "residential":
+        elif form == "residential":
             assert len(out) == 3
-        if form == "office":
-            assert len(out) == 0
 
 
 def test_sqftproforma_max_dua(simple_dev_inputs_low_cost, max_dua_dev_inputs):
@@ -77,11 +75,7 @@ def test_sqftproforma_low_cost(simple_dev_inputs_low_cost):
 
     for form in pf.config.forms:
         out = pf.lookup(form, simple_dev_inputs_low_cost)
-        if form == "industrial":
-            assert len(out) == 3
-        if form == "residential":
-            assert len(out) == 3
-        if form == "office":
+        if form in ["industrial", "residential", "office"]:
             assert len(out) == 3
 
 
@@ -131,11 +125,7 @@ def test_sqftproforma_high_cost(simple_dev_inputs_high_cost):
 
     for form in pf.config.forms:
         out = pf.lookup(form, simple_dev_inputs_high_cost)
-        if form == "industrial":
-            assert len(out) == 0
-        if form == "residential":
-            assert len(out) == 0
-        if form == "office":
+        if form in ["industrial", "residential", "office"]:
             assert len(out) == 0
 
 

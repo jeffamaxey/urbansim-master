@@ -218,17 +218,12 @@ def sample_rows(total, data, replace=True, accounting_column=None,
             data.index.values, int(total), replace=replace, p=p)].copy()
         matched = True
 
-    # sample with accounting
+    elif replace:
+        rows, matched = accounting_sample_replace(
+            total, data, accounting_column, prob_column, max_iterations)
     else:
-        if replace:
-            rows, matched = accounting_sample_replace(
-                total, data, accounting_column, prob_column, max_iterations)
-        else:
-            rows, matched = accounting_sample_no_replace(
-                total, data, accounting_column, prob_column)
+        rows, matched = accounting_sample_no_replace(
+            total, data, accounting_column, prob_column)
 
     # return the results
-    if return_status:
-        return rows, matched
-    else:
-        return rows
+    return (rows, matched) if return_status else rows

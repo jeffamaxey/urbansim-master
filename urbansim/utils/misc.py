@@ -104,14 +104,12 @@ def get_run_number():
     The integer number for this run of the model system.
     """
     try:
-        f = open(os.path.join(os.getenv('DATA_HOME', "."), 'RUNNUM'), 'r')
-        num = int(f.read())
-        f.close()
+        with open(os.path.join(os.getenv('DATA_HOME', "."), 'RUNNUM'), 'r') as f:
+            num = int(f.read())
     except Exception:
         num = 1
-    f = open(os.path.join(os.getenv('DATA_HOME', "."), 'RUNNUM'), 'w')
-    f.write(str(num + 1))
-    f.close()
+    with open(os.path.join(os.getenv('DATA_HOME', "."), 'RUNNUM'), 'w') as f:
+        f.write(str(num + 1))
     return num
 
 
@@ -313,8 +311,7 @@ def numpymat2df(mat):
     A pandas dataframe with the same data as the input matrix but with columns
     named x0,  x1, ... x[n-1] for the number of columns.
     """
-    return pd.DataFrame(
-        dict(('x%d' % i, mat[:, i]) for i in range(mat.shape[1])))
+    return pd.DataFrame({'x%d' % i: mat[:, i] for i in range(mat.shape[1])})
 
 
 def df64bitto32bit(tbl):
@@ -405,8 +402,9 @@ def column_map(tables, columns):
     colmap = {t.name: list(set(t.columns).intersection(columns)) for t in tables}
     foundcols = tz.reduce(lambda x, y: x.union(y), (set(v) for v in colmap.values()))
     if foundcols != columns:
-        raise RuntimeError('Not all required columns were found. '
-                           'Missing: {}'.format(list(columns - foundcols)))
+        raise RuntimeError(
+            f'Not all required columns were found. Missing: {list(columns - foundcols)}'
+        )
     return colmap
 
 

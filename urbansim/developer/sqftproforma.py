@@ -235,7 +235,7 @@ class SqFtProFormaConfig(object):
             assert k in self.parking_cost_d
             assert 10 <= v <= 300
         for v in self.heights_for_costs:
-            assert isinstance(v, int) or isinstance(v, float)
+            assert isinstance(v, (int, float))
             if np.isinf(v):
                 continue
             assert 0 <= v <= 1000
@@ -347,7 +347,7 @@ class SqFtProForma(object):
                 df['building_sqft'] = building_bulk
 
                 parkingstalls = building_bulk * \
-                    np.sum(uses_distrib * c.parking_rates) / c.sqft_per_rate
+                        np.sum(uses_distrib * c.parking_rates) / c.sqft_per_rate
                 parking_cost = (c.parking_cost_d[parking_config] *
                                 parkingstalls *
                                 c.parking_sqft_d[parking_config])
@@ -356,17 +356,17 @@ class SqFtProForma(object):
 
                 if parking_config == 'underground':
                     df['park_sqft'] = parkingstalls * \
-                        c.parking_sqft_d[parking_config]
+                            c.parking_sqft_d[parking_config]
                     stories = building_bulk / c.tiled_parcel_sizes
                 if parking_config == 'deck':
                     df['park_sqft'] = parkingstalls * \
-                        c.parking_sqft_d[parking_config]
+                            c.parking_sqft_d[parking_config]
                     stories = ((building_bulk + parkingstalls *
                                 c.parking_sqft_d[parking_config]) /
                                c.tiled_parcel_sizes)
                 if parking_config == 'surface':
                     stories = building_bulk / \
-                        (c.tiled_parcel_sizes - parkingstalls *
+                            (c.tiled_parcel_sizes - parkingstalls *
                          c.parking_sqft_d[parking_config])
                     df['park_sqft'] = 0
                     # not all fars support surface parking
@@ -388,11 +388,11 @@ class SqFtProForma(object):
 
                 df['ave_cost_sqft'] = (df.cost / df.total_built_sqft) * c.profit_factor
 
-                if name == 'retail':
-                    df['ave_cost_sqft'][c.fars > c.max_retail_height] = np.nan
                 if name == 'industrial':
                     df['ave_cost_sqft'][c.fars > c.max_industrial_height] = np.nan
 
+                elif name == 'retail':
+                    df['ave_cost_sqft'][c.fars > c.max_retail_height] = np.nan
                 df_d[(name, parking_config)] = df
 
         self.dev_d = df_d
@@ -686,11 +686,10 @@ class SqFtProForma(object):
 
         keys = c.forms.keys()
         keys = sorted(keys)
-        cnt = 1
         share = None
         fig = plt.figure(figsize=(12, 3 * len(keys)))
         fig.suptitle('Profitable rents by use', fontsize=40)
-        for name in keys:
+        for cnt, name in enumerate(keys, start=1):
             sumdf = None
             for parking_config in c.parking_configs:
                 df = df_d[(name, parking_config)]
@@ -708,9 +707,8 @@ class SqFtProForma(object):
             handles = plt.plot(far, sumdf)
             plt.ylabel('even_rent')
             plt.xlabel('FAR')
-            plt.title('Rents for use type %s' % name)
+            plt.title(f'Rents for use type {name}')
             plt.legend(
                 handles, c.parking_configs, loc='lower right',
                 title='Parking type')
-            cnt += 1
         plt.savefig('even_rents.png', bbox_inches=0)

@@ -81,36 +81,35 @@ def mnl_loglik(beta, data, chosen, numalts, weights=None, lcgrad=False,
     if lcgrad:
         assert weights
         gradmat = weights.subtract(probs).reshape(probs.size(), 1)
-        gradarr = data.multiply(gradmat)
     else:
-        if not weights:
-            gradmat = chosen.subtract(probs).reshape(probs.size(), 1)
-        else:
-            gradmat = chosen.subtract(probs).multiply_by_row(
-                weights).reshape(probs.size(), 1)
-        gradarr = data.multiply(gradmat)
-
+        gradmat = (
+            chosen.subtract(probs)
+            .multiply_by_row(weights)
+            .reshape(probs.size(), 1)
+            if weights
+            else chosen.subtract(probs).reshape(probs.size(), 1)
+        )
+    gradarr = data.multiply(gradmat)
     if stderr:
         gradmat = data.multiply_by_row(gradmat.reshape(1, gradmat.size()))
         gradmat.reshape(numvars, numalts * numobs)
         return get_standard_error(get_hessian(gradmat.get_mat()))
 
     chosen.reshape(numalts, numobs)
-    if weights is not None:
-        if probs.shape() == weights.shape():
-            loglik = ((probs.log(inplace=True)
-                       .element_multiply(weights, inplace=True)
-                       .element_multiply(chosen, inplace=True))
-                      .sum(axis=1).sum(axis=0))
-        else:
-            loglik = ((probs.log(inplace=True)
-                       .multiply_by_row(weights, inplace=True)
-                       .element_multiply(chosen, inplace=True))
-                      .sum(axis=1).sum(axis=0))
-    else:
+    if weights is None:
         loglik = (probs.log(inplace=True).element_multiply(
             chosen, inplace=True)).sum(axis=1).sum(axis=0)
 
+    elif probs.shape() == weights.shape():
+        loglik = ((probs.log(inplace=True)
+                   .element_multiply(weights, inplace=True)
+                   .element_multiply(chosen, inplace=True))
+                  .sum(axis=1).sum(axis=0))
+    else:
+        loglik = ((probs.log(inplace=True)
+                   .multiply_by_row(weights, inplace=True)
+                   .element_multiply(chosen, inplace=True))
+                  .sum(axis=1).sum(axis=0))
     if loglik.typ == 'numpy':
         loglik, gradarr = loglik.get_mat(), gradarr.get_mat().flatten()
     else:
@@ -149,9 +148,9 @@ def mnl_simulate(data, coeff, numalts, GPU=False, returnprobs=True):
 
     """
     logger.debug(
-        'start: MNL simulation with len(data)={} and numalts={}'.format(
-            len(data), numalts))
-    atype = 'numpy' if not GPU else 'cuda'
+        f'start: MNL simulation with len(data)={len(data)} and numalts={numalts}'
+    )
+    atype = 'cuda' if GPU else 'numpy'
 
     data = np.transpose(data)
     coeff = np.reshape(np.array(coeff), (1, len(coeff)))
@@ -217,9 +216,9 @@ def mnl_estimate(data, chosen, numalts, GPU=False, coeffrange=(-3, 3),
 
     """
     logger.debug(
-        'start: MNL fit with len(data)={} and numalts={}'.format(
-            len(data), numalts))
-    atype = 'numpy' if not GPU else 'cuda'
+        f'start: MNL fit with len(data)={len(data)} and numalts={numalts}'
+    )
+    atype = 'cuda' if GPU else 'numpy'
 
     numvars = data.shape[1]
     numobs = data.shape[0] // numalts

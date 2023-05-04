@@ -263,7 +263,4 @@ class Developer(object):
         concat_df = pd.concat([old_df, new_df], verify_integrity=True)
         concat_df.index.name = 'building_id'
 
-        if return_index:
-            return concat_df, new_df.index
-
-        return concat_df
+        return (concat_df, new_df.index) if return_index else concat_df
